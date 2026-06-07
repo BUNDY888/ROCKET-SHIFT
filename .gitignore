@@ -1,0 +1,9 @@
+node_modules
+dist
+dist-electron
+release
+landing/download
+landing-site
+.tools
+*.log
+.DS_Store

@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="Rocket Shift — один % дня по факту времени, виджет на рабочем столе, закрытие дня и сравнение с вчера. Не todo-лист."
+    />
+    <title>Rocket Shift — % дня на рабочем столе</title>
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="Rocket Shift — % дня на рабочем столе" />
+    <meta
+      property="og:description"
+      content="Один честный % дня, виджет на рабочем столе, закрытие дня и сравнение с вчера."
+    />
+    <meta property="og:image" content="/screenshots/main-dashboard.png" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <link rel="icon" href="assets/rocket-logo.png" type="image/png" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="site.css" />
+  </head>
+  <body>
+    <header class="top">
+      <div class="container top-inner">
+        <a class="logo" href="#">
+          <img src="assets/rocket-logo.png" alt="" width="32" height="32" />
+          Rocket Shift
+        </a>
+      </div>
+    </header>
+
+    <section class="hero">
+      <div class="container hero-inner">
+        <p class="badge">✦ Планировщик дня · Windows</p>
+        <h1>
+          Приложение для твоего роста.<br />
+          <span class="muted">День за днём — один честный %.</span>
+        </h1>
+        <p class="hero-sub hero-quote">
+          «Сосредоточьтесь на том, чего вы хотите достичь!»
+        </p>
+        <div class="hero-actions">
+          <a class="btn btn-dark" href="#download">Скачать для Windows</a>
+          <a class="btn btn-outline" href="#inside">Что внутри</a>
+        </div>
+        <div class="stats">
+          <div><strong>Утром</strong> блоки задач — план на день за минуты</div>
+          <div><strong>Днём</strong> виджет на экране, % без лишних кликов</div>
+          <div><strong>Вечером</strong> итог, streak и сравнение с вчера</div>
+        </div>
+      </div>
+    </section>
+
+    <section class="widget-row">
+      <div class="container widget-row-inner">
+        <p class="widget-label">Видно с первого взгляда: день идёт или нет</p>
+        <div class="widget-tiles">
+          <img src="screenshots/widget-14.png" alt="14%" width="280" height="72" />
+          <img src="screenshots/widget-28.png" alt="28%" width="280" height="72" />
+          <img src="screenshots/widget-55.png" alt="55%" width="280" height="72" />
+          <img src="screenshots/widget-127.png" alt="127%" width="280" height="72" />
+        </div>
+      </div>
+    </section>
+
+    <main id="inside">
+      <section class="block">
+        <div class="container block-grid">
+          <div class="block-copy">
+            <span class="num">1</span>
+            <h2>Один % — и сразу ясно</h2>
+            <p>
+              Большой процент, полоска к цели дня, гистограмма по часам между подъёмом и сном.
+              Не «открыл todo — закрыл todo», а честный факт дня.
+            </p>
+          </div>
+          <div class="shot-duo">
+            <figure class="shot">
+              <figcaption>← Так это выглядит в приложении</figcaption>
+              <img
+                src="screenshots/main-dashboard.png"
+                alt="Главный экран Rocket Shift: 146% дня, цель достигнута"
+              />
+            </figure>
+            <img src="screenshots/histogram.png" alt="Гистограмма факта по часам" />
+          </div>
+        </div>
+      </section>
+
+      <section class="block block-alt">
+        <div class="container block-grid reverse">
+          <div class="block-copy">
+            <span class="num">2</span>
+            <h2>Задачи, таймер, фокус</h2>
+            <p>
+              План и факт в одной карточке. Старт таймера — один клик. Режим фокуса — только
+              текущий слот, Esc — выход.
+            </p>
+          </div>
+          <div class="shot-duo">
+            <img src="screenshots/tasks.png" alt="Карточки задач" />
+            <img src="screenshots/focus.png" alt="Режим фокуса" />
+          </div>
+        </div>
+      </section>
+
+      <section class="block">
+        <div class="container block-grid">
+          <div class="block-copy">
+            <span class="num">3</span>
+            <h2>Цели на месяцы и годы</h2>
+            <p>
+              Английский, спорт, бизнес — часы копятся из задач и «до приложения». Видно,
+              сколько осталось и при каком темпе.
+            </p>
+          </div>
+          <div class="shot-duo">
+            <img src="screenshots/goals.png" alt="Долгосрочные цели" />
+            <img src="screenshots/month.png" alt="Календарь месяца с % по дням" />
+          </div>
+        </div>
+      </section>
+
+      <section class="block block-alt">
+        <div class="container block-grid reverse">
+          <div class="block-copy">
+            <span class="num">4</span>
+            <h2>Неделя и закрытие дня</h2>
+            <p>
+              Средний %, лучший день, streak. Вечером — итог, сравнение с вчера, карточка в
+              чат одной кнопкой.
+            </p>
+          </div>
+          <div class="shot-duo">
+            <img src="screenshots/week.png" alt="Статистика недели" />
+            <img src="screenshots/close-day.png" alt="Итог дня 100%" />
+          </div>
+        </div>
+      </section>
+
+      <section class="block">
+        <div class="container block-grid">
+          <div class="block-copy">
+            <span class="num">5</span>
+            <h2>На рабочем столе</h2>
+            <p>
+              Окно приложения и виджет поверх окон — % дня всегда на виду, не нужно каждый раз
+              открывать программу.
+            </p>
+          </div>
+          <figure class="shot shot-compact">
+            <img
+              src="screenshots/desktop.png"
+              alt="Rocket Shift на рабочем столе: приложение, виджет и ярлык"
+            />
+          </figure>
+        </div>
+      </section>
+
+      <section class="block block-alt">
+        <div class="container block-grid reverse">
+          <div class="block-copy">
+            <span class="num">6</span>
+            <h2>Свой знак на плитке</h2>
+            <p>
+              Эмодзи, персонажи из списка или своё фото — загрузите картинку и поставьте на виджет рядом с %.
+            </p>
+          </div>
+          <figure class="shot">
+            <img src="screenshots/widget-icons.png" alt="Выбор иконки виджета" />
+          </figure>
+        </div>
+      </section>
+    </main>
+
+    <section class="cta" id="download">
+      <div class="container cta-inner">
+        <h2>Начни с сегодняшнего дня</h2>
+        <p>Windows 10/11 · установщик ~86 МБ · бета 1.0</p>
+        <a
+          class="btn btn-dark btn-lg"
+          href="https://github.com/BUNDY888/ROCKET-SHIFT/releases/download/v1.0.0/Rocket-Shift-Setup-1.0.0.exe"
+          rel="noopener"
+        >
+          Скачать Rocket Shift
+        </a>
+        <p class="cta-fine">
+          Не качается?
+          <a href="mailto:rocketshiftapp@gmail.com">rocketshiftapp@gmail.com</a>
+        </p>
+      </div>
+    </section>
+
+    <footer class="footer">
+      <div class="container footer-inner">
+        <span>Rocket Shift</span>
+        <a href="mailto:rocketshiftapp@gmail.com">rocketshiftapp@gmail.com</a>
+      </div>
+    </footer>
+  </body>
+</html>

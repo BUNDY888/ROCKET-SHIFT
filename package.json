@@ -1,0 +1,93 @@
+{
+  "name": "rocket-shift",
+  "version": "1.0.0",
+  "description": "Rocket Shift — desktop day planner with always-on-top widget",
+  "main": "dist-electron/main.js",
+  "author": "",
+  "license": "MIT",
+  "scripts": {
+    "dev": "vite",
+    "build": "npm run build:installer",
+    "build:dir": "vite build && electron-builder --dir && npm run fix-exe-icon",
+    "build:installer": "npm run generate:icon && vite build && electron-builder --dir && npm run fix-exe-icon && electron-builder --win nsis --prepackaged release/win-unpacked",
+    "prepare:landing": "node scripts/prepare-landing-deploy.mjs",
+    "prepare:landing:site": "node scripts/prepare-landing-deploy.mjs --site-only",
+    "publish:beta": "node scripts/publish-beta.mjs",
+    "generate:icon": "node scripts/generate-icon.mjs",
+    "fix-exe-icon": "node scripts/fix-exe-icon.mjs",
+    "process:widget-arnold": "node scripts/process-widget-photo.mjs src/assets/widget-arnold.png light",
+    "process:widget-billy": "node scripts/process-widget-photo.mjs src/assets/widget-billy.png purple",
+    "shortcut": "powershell -ExecutionPolicy Bypass -File scripts/create-desktop-shortcut.ps1",
+    "refresh-icon": "npm run generate:icon && npm run fix-exe-icon && powershell -ExecutionPolicy Bypass -File scripts/refresh-desktop-icon.ps1",
+    "postinstall": "node scripts/generate-icon.mjs",
+    "start": "vite"
+  },
+  "dependencies": {
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "recharts": "^2.15.0"
+  },
+  "devDependencies": {
+    "@types/react": "^18.3.12",
+    "@types/react-dom": "^18.3.1",
+    "@vitejs/plugin-react": "^4.3.4",
+    "concurrently": "^9.1.0",
+    "electron": "^33.2.0",
+    "electron-builder": "^25.1.8",
+    "png-to-ico": "^3.0.1",
+    "png2icons": "^2.0.1",
+    "rcedit": "^4.0.1",
+    "sharp": "^0.34.5",
+    "typescript": "^5.6.3",
+    "vite": "^5.4.11",
+    "vite-plugin-electron": "^0.28.8",
+    "vite-plugin-electron-renderer": "^0.14.6",
+    "wait-on": "^8.0.1"
+  },
+  "build": {
+    "appId": "com.rocketshift.app",
+    "productName": "Rocket Shift",
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "dist/**/*",
+      "dist-electron/**/*"
+    ],
+    "extraResources": [
+      { "from": "build/tray-16.png", "to": "icons/tray-16.png" },
+      { "from": "build/tray-32.png", "to": "icons/tray-32.png" },
+      { "from": "build/icon.png", "to": "icon.png" }
+    ],
+    "icon": "build/icon.ico",
+    "win": {
+      "target": [
+        "nsis"
+      ],
+      "icon": "build/icon.ico",
+      "signAndEditExecutable": false
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "allowElevation": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "Rocket Shift",
+      "installerIcon": "build/icon.ico",
+      "uninstallerIcon": "build/icon.ico",
+      "artifactName": "Rocket-Shift-Setup-${version}.${ext}"
+    },
+    "mac": {
+      "target": [
+        "dmg"
+      ],
+      "icon": "build/icon.png"
+    },
+    "linux": {
+      "target": [
+        "AppImage"
+      ]
+    }
+  }
+}
