@@ -1,4 +1,5 @@
 import fs from 'fs';
+import https from 'https';
 import path from 'path';
 import { spawnSync } from 'child_process';
 import { fileURLToPath } from 'url';
@@ -9,9 +10,9 @@ const deployConfig = JSON.parse(
   fs.readFileSync(path.join(landingDir, 'deploy.json'), 'utf8'),
 );
 const { repo, tag, installerName } = deployConfig;
-const [owner, repoName] = repo.split('/');
 const installerPath = path.join(root, 'release', installerName);
 const token = process.env.GITHUB_TOKEN || process.env.GH_TOKEN;
+const uploadOnly = process.argv.includes('--upload-only');
 
 function run(cmd, args, opts = {}) {
   const result = spawnSync(cmd, args, {
@@ -80,6 +81,66 @@ async function githubRequest(method, apiPath, { json, rawBody, headers = {} } = 
   return response.text();
 }
 
+function uploadReleaseAsset(releaseId, installerFile) {
+  return new Promise((resolve, reject) => {
+    const stat = fs.statSync(installerFile);
+    const sizeMb = (stat.size / (1024 * 1024)).toFixed(1);
+    const query = `name=${encodeURIComponent(installerName)}`;
+    const requestPath = `/repos/${repo}/releases/${releaseId}/assets?${query}`;
+
+    console.log(`Uploading ${installerName} (${sizeMb} MB)... this can take several minutes.`);
+
+    let uploaded = 0;
+    let lastLogged = 0;
+    const stream = fs.createReadStream(installerFile);
+
+    const req = https.request(
+      {
+        method: 'POST',
+        hostname: 'uploads.github.com',
+        path: requestPath,
+        headers: {
+          Authorization: `Bearer ${token}`,
+          Accept: 'application/vnd.github+json',
+          'Content-Type': 'application/octet-stream',
+          'Content-Length': stat.size,
+        },
+        timeout: 30 * 60 * 1000,
+      },
+      (res) => {
+        let data = '';
+        res.setEncoding('utf8');
+        res.on('data', (chunk) => {
+          data += chunk;
+        });
+        res.on('end', () => {
+          if (res.statusCode >= 200 && res.statusCode < 300) {
+            console.log('Upload complete.');
+            resolve(JSON.parse(data));
+            return;
+          }
+          reject(new Error(`Upload failed: ${res.statusCode}: ${data}`));
+        });
+      },
+    );
+
+    req.on('timeout', () => {
+      req.destroy(new Error('Upload timed out after 30 minutes'));
+    });
+    req.on('error', reject);
+    stream.on('data', (chunk) => {
+      uploaded += chunk.length;
+      const pct = Math.floor((uploaded / stat.size) * 100);
+      if (pct >= lastLogged + 10) {
+        lastLogged = pct;
+        console.log(`  ${pct}% uploaded`);
+      }
+    });
+    stream.on('error', reject);
+    stream.pipe(req);
+  });
+}
+
 async function ensureRelease(installerFile) {
   let release;
   try {
@@ -102,23 +163,7 @@ async function ensureRelease(installerFile) {
     await githubRequest('DELETE', `/repos/${repo}/releases/assets/${existing.id}`);
   }
 
-  const uploadUrl = `https://uploads.github.com/repos/${repo}/releases/${release.id}/assets?name=${encodeURIComponent(installerName)}`;
-  const body = fs.readFileSync(installerFile);
-  const uploadResponse = await fetch(uploadUrl, {
-    method: 'POST',
-    headers: {
-      Authorization: `Bearer ${token}`,
-      Accept: 'application/vnd.github+json',
-      'Content-Type': 'application/octet-stream',
-      'Content-Length': String(body.length),
-    },
-    body,
-  });
-  if (!uploadResponse.ok) {
-    const text = await uploadResponse.text();
-    throw new Error(`Upload failed: ${uploadResponse.status}: ${text}`);
-  }
-
+  await uploadReleaseAsset(release.id, installerFile);
   return release.html_url;
 }
 
@@ -144,7 +189,11 @@ function pushWithGit(gitExe) {
 }
 
 console.log('1/3 Preparing landing site...');
-run(process.execPath, ['scripts/prepare-landing-deploy.mjs', '--site-only']);
+if (!uploadOnly) {
+  run(process.execPath, ['scripts/prepare-landing-deploy.mjs', '--site-only']);
+} else {
+  console.log('Skipped (upload-only).');
+}
 
 if (!fs.existsSync(installerPath)) {
   console.error(`Installer missing: ${installerPath}`);
@@ -165,8 +214,12 @@ if (!token) {
 }
 
 const gitExe = resolveGit();
-console.log('2/3 Pushing code to GitHub...');
-pushWithGit(gitExe);
+if (!uploadOnly) {
+  console.log('2/3 Pushing code to GitHub...');
+  pushWithGit(gitExe);
+} else {
+  console.log('2/3 Skipped git push (upload-only).');
+}
 
 console.log('3/3 Uploading installer to GitHub Release...');
 const releaseUrl = await ensureRelease(installerPath);
@@ -177,5 +230,5 @@ console.log(`Repo: https://github.com/${repo}`);
 console.log(`Release: ${releaseUrl}`);
 console.log(`Download: https://github.com/${repo}/releases/download/${tag}/${installerName}`);
 console.log('');
-console.log('Next: upload landing-site/ to Cloudflare Pages (Upload assets).');
-console.log('Folder: ' + path.join(root, 'landing-site'));
+console.log('Landing: npm run prepare:landing:docs && git add docs && git push');
+console.log('Site: https://bundy888.github.io/ROCKET-SHIFT/');

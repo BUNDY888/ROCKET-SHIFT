@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Rocket Shift — главный экран (макет)</title>
+    <link rel="stylesheet" href="mockups.css" />
+  </head>
+  <body class="mockup-page">
+    <div class="mockup-hint">1440×900 · скрин для лендинга</div>
+    <div class="app-shell">
+      <header class="main-header">
+        <div class="header-brand">
+          <img src="../src/assets/rocket-logo.png" alt="" />
+          <h1>Rocket Shift</h1>
+        </div>
+        <div class="header-actions">
+          <span class="chip streak">🔥 5</span>
+          <span class="chip">🎯 Цели</span>
+          <span class="chip">🏆</span>
+          <span class="chip">🎯 Фокус</span>
+          <span class="chip dark">✓ Закрыть день</span>
+        </div>
+      </header>
+
+      <div class="percent-block">
+        <div class="percent-display">52,1%</div>
+        <p class="percent-breakdown">
+          Временные: <strong>47,1%</strong> · Фиксированные: <strong>+5%</strong> · Итого:
+          <strong>52,1%</strong>
+        </p>
+      </div>
+
+      <div class="histogram-tools">
+        <div class="panel">
+          <span style="width: 100%; font-weight: 600; color: var(--rs-text-muted); font-size: 0.8rem"
+            >Режим сна</span
+          >
+          <label
+            >Просыпаюсь<input type="text" value="09:00" readonly /></label
+          >
+          <label>Ложусь<input type="text" value="23:00" readonly /></label>
+        </div>
+        <div class="mode-col">
+          <span class="chip">📆 Неделя</span>
+          <span class="chip">🗓 Месяц</span>
+        </div>
+      </div>
+
+      <p style="margin: 0 0 6px; font-size: 0.95rem; font-weight: 600">09:00 – 23:00 — факт</p>
+
+      <div class="histogram-row">
+        <div class="bar" style="height: 28%; background: var(--zone-red)"></div>
+        <div class="bar" style="height: 45%; background: var(--zone-orange)"></div>
+        <div class="bar" style="height: 72%; background: var(--zone-green)"></div>
+        <div class="bar" style="height: 88%; background: var(--zone-green)"></div>
+        <div class="bar" style="height: 55%; background: var(--zone-green)"></div>
+        <div class="bar" style="height: 40%; background: var(--zone-orange)"></div>
+        <div class="bar" style="height: 65%; background: var(--zone-green)"></div>
+        <div class="bar" style="height: 30%; background: var(--zone-orange)"></div>
+        <div class="bar" style="height: 18%; background: var(--zone-red)"></div>
+        <div class="bar" style="height: 8%; background: transparent"></div>
+        <div class="bar" style="height: 8%; background: transparent"></div>
+        <div class="bar" style="height: 8%; background: transparent"></div>
+      </div>
+      <div class="bar-labels">
+        <span>9</span><span>10</span><span>11</span><span>12</span><span>13</span><span>14</span
+        ><span>15</span><span>16</span><span>17</span><span>18</span><span>19</span><span>20</span>
+      </div>
+
+      <div class="content-grid">
+        <div class="task-card">
+          <h3>Глубокая работа</h3>
+          <div class="task-meta">План 2 ч · Факт 1 ч 54 мин · 09:00–11:00</div>
+        </div>
+        <div class="task-card">
+          <h3>Тренировка</h3>
+          <div class="task-meta">План 1 ч · Факт 1 ч · 16:00–17:00</div>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>
