@@ -39,6 +39,9 @@ async function github(method, apiPath, body) {
     },
     body: body ? JSON.stringify(body) : undefined,
   });
+  if (response.status === 204) {
+    return null;
+  }
   const text = await response.text();
   if (!response.ok) {
     throw new Error(`GitHub API ${method} ${apiPath} -> ${response.status}: ${text}`);
@@ -63,11 +66,13 @@ try {
 }
 
 if (pages?.html_url) {
-  const updated = await github('PUT', `/repos/${owner}/${repoName}/pages`, payload);
-  console.log(`GitHub Pages: ${updated.html_url}`);
+  await github('PUT', `/repos/${owner}/${repoName}/pages`, payload);
+  const current = await github('GET', `/repos/${owner}/${repoName}/pages`);
+  console.log(`GitHub Pages: ${current.html_url}`);
   if (customDomain) {
     console.log(`Custom domain: https://${customDomain}/`);
-    console.log(`DNS check: ${updated.https_certificate?.state ?? 'pending'}`);
+    console.log(`Status: ${current.status}`);
+    console.log(`HTTPS: ${current.https_enforced ? 'on' : 'pending (after DNS)'}`);
   }
 } else {
   const created = await github('POST', `/repos/${owner}/${repoName}/pages`, payload);
