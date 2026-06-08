@@ -231,4 +231,7 @@ console.log(`Release: ${releaseUrl}`);
 console.log(`Download: https://github.com/${repo}/releases/download/${tag}/${installerName}`);
 console.log('');
 console.log('Landing: npm run prepare:landing:docs && git add docs && git push');
-console.log('Site: https://bundy888.github.io/ROCKET-SHIFT/');
+const siteUrl = deployConfig.customDomain
+  ? `https://${deployConfig.customDomain}/`
+  : `https://github.com/${repo}/`;
+console.log(`Site: ${siteUrl}`);

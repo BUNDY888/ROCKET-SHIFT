@@ -12,7 +12,7 @@ const siteOutDir = docsMode ? path.join(root, 'docs') : path.join(root, 'landing
 const deployConfig = JSON.parse(
   fs.readFileSync(path.join(landingDir, 'deploy.json'), 'utf8'),
 );
-const { repo, tag, installerName } = deployConfig;
+const { repo, tag, installerName, customDomain } = deployConfig;
 const installerSrc = path.join(root, 'release', installerName);
 const downloadUrl = `https://github.com/${repo}/releases/download/${tag}/${installerName}`;
 
@@ -69,6 +69,9 @@ function copyLandingSite() {
 
   copyDir(landingDir, siteOutDir);
   fs.writeFileSync(path.join(siteOutDir, '.nojekyll'), '');
+  if (customDomain) {
+    fs.writeFileSync(path.join(siteOutDir, 'CNAME'), `${customDomain}\n`);
+  }
 }
 
 checkFile('assets/rocket-logo.png');
@@ -82,7 +85,8 @@ if (siteOnly) {
   console.log(`Output folder: ${docsMode ? 'docs/' : 'landing-site/'}`);
   console.log(`Download button points to: ${downloadUrl}`);
   if (docsMode) {
-    console.log('GitHub Pages: https://bundy888.github.io/ROCKET-SHIFT/');
+    const siteUrl = customDomain ? `https://${customDomain}/` : `https://github.com/${repo}/`;
+    console.log(`Site URL: ${siteUrl}`);
     console.log('Commit docs/ and push to main — Pages serves /docs automatically.');
   } else {
     console.log('Create GitHub Release first if the download link returns 404.');

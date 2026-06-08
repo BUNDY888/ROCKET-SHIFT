@@ -8,6 +8,7 @@ const deployConfig = JSON.parse(
   fs.readFileSync(path.join(root, 'landing', 'deploy.json'), 'utf8'),
 );
 const [owner, repoName] = deployConfig.repo.split('/');
+const { customDomain } = deployConfig;
 
 function resolveToken() {
   const fromEnv = process.env.GITHUB_TOKEN || process.env.GH_TOKEN;
@@ -51,6 +52,7 @@ const payload = {
     branch: 'main',
     path: '/docs',
   },
+  ...(customDomain ? { cname: customDomain } : {}),
 };
 
 let pages;
@@ -61,13 +63,16 @@ try {
 }
 
 if (pages?.html_url) {
-  if (pages.source?.path === '/docs' && pages.source?.branch === 'main') {
-    console.log(`GitHub Pages already enabled: ${pages.html_url}`);
-    process.exit(0);
-  }
   const updated = await github('PUT', `/repos/${owner}/${repoName}/pages`, payload);
-  console.log(`GitHub Pages updated: ${updated.html_url}`);
+  console.log(`GitHub Pages: ${updated.html_url}`);
+  if (customDomain) {
+    console.log(`Custom domain: https://${customDomain}/`);
+    console.log(`DNS check: ${updated.https_certificate?.state ?? 'pending'}`);
+  }
 } else {
   const created = await github('POST', `/repos/${owner}/${repoName}/pages`, payload);
   console.log(`GitHub Pages enabled: ${created.html_url}`);
+  if (customDomain) {
+    console.log(`Custom domain: https://${customDomain}/`);
+  }
 }
