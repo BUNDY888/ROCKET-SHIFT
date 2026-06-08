@@ -139,7 +139,7 @@ export interface MacroGoal {
   id: string;
   name: string;
   emoji: string;
-  /** Подстрока в названии задачи для авто-привязки (например «английский»). */
+  /** Заметка для себя (на подсчёт часов не влияет). */
   linkTag: string;
   targetMinutes: number;
   /** Факт, внесённый вручную (до создания цели в приложении). */

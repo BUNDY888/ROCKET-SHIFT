@@ -72,6 +72,19 @@ function copyLandingSite() {
   if (customDomain) {
     fs.writeFileSync(path.join(siteOutDir, 'CNAME'), `${customDomain}\n`);
   }
+  patchSiteMetadata();
+}
+
+function patchSiteMetadata() {
+  const indexPath = path.join(siteOutDir, 'index.html');
+  let html = fs.readFileSync(indexPath, 'utf8');
+  const version = tag.replace(/^v/, '');
+  html = html.replace(
+    /href="https:\/\/github\.com\/[^"]+\.exe"/,
+    `href="${downloadUrl}"`,
+  );
+  html = html.replace(/бета [\d.]+/, `бета ${version}`);
+  fs.writeFileSync(indexPath, html);
 }
 
 checkFile('assets/rocket-logo.png');

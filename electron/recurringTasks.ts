@@ -10,6 +10,7 @@ import type {
 import { todayKey } from './types';
 import { tasksToTemplateItems, templateItemsToTasks } from './dayTemplates';
 import { saveData } from './store';
+import { MACRO_GOAL_OPT_OUT } from './taskMacroGoal';
 
 function parseDateKey(dateKey: string): Date {
   const [y, m, d] = dateKey.split('-').map(Number);
@@ -102,6 +103,63 @@ export function ensureRecurringTasksForDay(
   return data;
 }
 
+/** Если в шаблоне цели нет, но в одном из дней серии выбрана — подтянуть в шаблон и раздать всем. */
+export function reconcileRecurringMacroGoals(data: PersistedData): PersistedData {
+  for (const def of data.recurringTasks ?? []) {
+    if (def.item.type !== 'temporal') continue;
+    if (def.item.macroGoalId) {
+      data = propagateMacroGoalFromRecurringDefinition(data, def.id);
+      continue;
+    }
+    let promoted: string | null | undefined;
+    for (const day of Object.values(data.days)) {
+      const hit = day.tasks.find(
+        (t) =>
+          t.type === 'temporal' &&
+          t.recurringId === def.id &&
+          t.macroGoalId &&
+          t.macroGoalId !== MACRO_GOAL_OPT_OUT,
+      );
+      if (hit?.type === 'temporal') {
+        promoted = hit.macroGoalId;
+        break;
+      }
+    }
+    if (!promoted) continue;
+    data.recurringTasks = (data.recurringTasks ?? []).map((d) =>
+      d.id === def.id && d.item.type === 'temporal'
+        ? { ...d, item: { ...d.item, macroGoalId: promoted } }
+        : d,
+    );
+    data = propagateMacroGoalFromRecurringDefinition(data, def.id);
+  }
+  return data;
+}
+
+export function propagateMacroGoalFromRecurringDefinition(
+  data: PersistedData,
+  recurringId: string,
+): PersistedData {
+  const def = (data.recurringTasks ?? []).find((d) => d.id === recurringId);
+  if (!def || def.item.type !== 'temporal') return data;
+
+  const goalId = def.item.macroGoalId ?? null;
+  let changed = false;
+
+  for (const day of Object.values(data.days)) {
+    day.tasks = day.tasks.map((t) => {
+      if (t.type !== 'temporal' || t.recurringId !== recurringId) return t;
+      if (t.macroGoalId === MACRO_GOAL_OPT_OUT) return t;
+      if ((t.macroGoalId ?? null) === goalId) return t;
+      changed = true;
+      return { ...t, macroGoalId: goalId };
+    });
+  }
+
+  if (changed) saveData(data);
+  return data;
+}
+
 export function syncRecurringTemplatesFromDay(
   data: PersistedData,
   day: DayState,
@@ -110,17 +168,22 @@ export function syncRecurringTemplatesFromDay(
   if (defs.length === 0) return data;
 
   let changed = false;
+  const updatedRecurringIds: string[] = [];
   const nextDefs = defs.map((def) => {
     const task = day.tasks.find((t) => t.recurringId === def.id);
     if (!task) return def;
     const item = taskToTemplateItem(task);
     changed = true;
+    updatedRecurringIds.push(def.id);
     return { ...def, item };
   });
 
   if (!changed) return data;
   data.recurringTasks = nextDefs;
   saveData(data);
+  for (const recurringId of updatedRecurringIds) {
+    data = propagateMacroGoalFromRecurringDefinition(data, recurringId);
+  }
   return data;
 }
 

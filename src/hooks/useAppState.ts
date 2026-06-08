@@ -58,36 +58,22 @@ export function useAppState() {
 
 
 
-  const updateTasks = useCallback(
+  const updateTasks = useCallback(async (tasks: Task[]): Promise<StatePayload> => {
+    savePendingRef.current = true;
 
-    async (tasks: Task[]): Promise<StatePayload> => {
-
+    try {
+      const current = await window.electronAPI.getState();
       const day: DayState = {
-        ...(state?.day ?? { date: todayKey(), tasks }),
+        ...current.day,
         tasks,
       };
-
-      savePendingRef.current = true;
-
-      try {
-
-        const payload = await saveDay(day);
-
-        setState({ ...payload, loading: false });
-
-        return payload;
-
-      } finally {
-
-        savePendingRef.current = false;
-
-      }
-
-    },
-
-    [saveDay, state?.day],
-
-  );
+      const payload = await saveDay(day);
+      setState({ ...payload, loading: false });
+      return payload;
+    } finally {
+      savePendingRef.current = false;
+    }
+  }, [saveDay]);
 
 
 

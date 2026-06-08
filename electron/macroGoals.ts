@@ -2,29 +2,18 @@ import { randomUUID } from 'crypto';
 import type { MacroGoal, MacroGoalCompletion, PersistedData, Task, TemporalTask } from './types';
 import { applyActiveTimer } from './calculations';
 import { saveData } from './store';
+import { taskCountsTowardMacroGoal, MACRO_GOAL_OPT_OUT } from './taskMacroGoal';
 import { todayKey } from './types';
+import type { RecurringTaskDefinition } from './types';
 
 export const MAX_MACRO_GOALS = 3;
 
-export const MACRO_GOAL_OPT_OUT = 'none' as const;
-
-export function taskMatchesMacroGoal(task: TemporalTask, goal: MacroGoal): boolean {
-  if (task.macroGoalId === MACRO_GOAL_OPT_OUT) return false;
-  if (task.macroGoalId === goal.id) return true;
-  if (task.macroGoalId) return false;
-  const tag = goal.linkTag.trim().toLowerCase();
-  if (!tag) return false;
-  return task.name.trim().toLowerCase().includes(tag);
-}
-
-function goalCountingStartDate(goal: MacroGoal): string {
-  return goal.createdAt.slice(0, 10);
-}
+export { MACRO_GOAL_OPT_OUT };
 
 function minutesFromTasks(
   tasks: Task[],
   goals: MacroGoal[],
-  dayDate: string,
+  recurringDefs: RecurringTaskDefinition[],
 ): Map<string, number> {
   const totals = new Map<string, number>();
   for (const goal of goals) totals.set(goal.id, 0);
@@ -34,8 +23,7 @@ function minutesFromTasks(
     const actual = Math.max(0, task.actualMinutes);
     if (actual <= 0) continue;
     for (const goal of goals) {
-      if (dayDate < goalCountingStartDate(goal)) continue;
-      if (!taskMatchesMacroGoal(task, goal)) continue;
+      if (!taskCountsTowardMacroGoal(task, goal.id, recurringDefs)) continue;
       totals.set(goal.id, (totals.get(goal.id) ?? 0) + actual);
     }
   }
@@ -55,7 +43,7 @@ export function recalculateMacroGoalTotals(data: PersistedData): Map<string, num
     if (date === today && data.activeTimer) {
       tasks = applyActiveTimer(tasks, data.activeTimer);
     }
-    for (const [goalId, minutes] of minutesFromTasks(tasks, goals, date)) {
+    for (const [goalId, minutes] of minutesFromTasks(tasks, goals, data.recurringTasks ?? [])) {
       totals.set(goalId, (totals.get(goalId) ?? 0) + minutes);
     }
   }

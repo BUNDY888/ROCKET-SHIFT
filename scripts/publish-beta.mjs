@@ -150,7 +150,16 @@ async function ensureRelease(installerFile) {
       json: {
         tag_name: tag,
         name: `Rocket Shift ${deployConfig.tag.replace(/^v/, '')} beta`,
-        body: 'Windows installer. Beta — бесплатно. Вопросы: rocketshiftapp@gmail.com',
+        body: [
+          'Windows installer. Beta — бесплатно.',
+          '',
+          '### v1.0.1',
+          '- Макро-цели: часы только через выбор «Цель» на задаче',
+          '- Исправлено сохранение поля «План» при работающем таймере',
+          '- Правки повторяющихся задач и закрытых дней',
+          '',
+          'Вопросы: rocketshiftapp@gmail.com',
+        ].join('\n'),
         draft: false,
         prerelease: true,
       },

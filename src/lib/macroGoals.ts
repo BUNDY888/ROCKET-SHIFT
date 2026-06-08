@@ -1,16 +1,19 @@
-import type { MacroGoal, TemporalTask } from '../../electron/types';
+import type { MacroGoal, RecurringTaskDefinition, TemporalTask } from '../../electron/types';
+import {
+  MACRO_GOAL_OPT_OUT,
+  resolveTaskMacroGoalId,
+} from '../../electron/taskMacroGoal';
 
 export const MAX_MACRO_GOALS = 3;
 
-export const MACRO_GOAL_OPT_OUT = 'none' as const;
+export { MACRO_GOAL_OPT_OUT };
 
-export function taskMatchesMacroGoal(task: TemporalTask, goal: MacroGoal): boolean {
-  if (task.macroGoalId === MACRO_GOAL_OPT_OUT) return false;
-  if (task.macroGoalId === goal.id) return true;
-  if (task.macroGoalId) return false;
-  const tag = goal.linkTag.trim().toLowerCase();
-  if (!tag) return false;
-  return task.name.trim().toLowerCase().includes(tag);
+export function taskMatchesMacroGoal(
+  task: TemporalTask,
+  goal: MacroGoal,
+  recurringTasks?: RecurringTaskDefinition[],
+): boolean {
+  return resolveTaskMacroGoalId(task, recurringTasks) === goal.id;
 }
 
 export function formatMacroGoalHours(minutes: number): string {
@@ -46,29 +49,30 @@ export function macroGoalEtaWeeks(goal: MacroGoal): string | null {
 
 export function macroGoalLinkHint(goal: MacroGoal): string {
   const prior = (goal.priorMinutes ?? 0) > 0 ? ' + внесённый вручную старт' : '';
-  if (goal.linkTag.trim()) {
-    return `Факт по задачам с «${goal.linkTag}» в названии, с даты создания цели${prior}`;
-  }
-  return `Факт по привязанным задачам, с даты создания цели${prior}`;
+  return `Факт по задачам с выбранной целью в карточке (повторы — из шаблона)${prior}`;
 }
 
 export function macroGoalPriorHint(goal: MacroGoal): string | null {
   const prior = goal.priorMinutes ?? 0;
-  if (prior <= 0) return null;
-  const tracked = Math.max(0, goal.accumulatedMinutes - prior);
-  if (tracked > 0) {
-    return `Из них ${formatMacroGoalHours(prior)} до приложения, ${formatMacroGoalHours(tracked)} из задач`;
+  const fromTasks = Math.max(0, goal.accumulatedMinutes - prior);
+  if (prior > 0 && fromTasks > 0) {
+    return `Из них ${formatMacroGoalHours(prior)} до приложения, ${formatMacroGoalHours(fromTasks)} из задач`;
   }
-  return `${formatMacroGoalHours(prior)} внесено до приложения`;
+  if (prior > 0) {
+    return `${formatMacroGoalHours(prior)} внесено до приложения`;
+  }
+  if (fromTasks > 0) {
+    return `${formatMacroGoalHours(fromTasks)} из задач в приложении`;
+  }
+  return null;
 }
 
 export function resolveTaskMacroGoal(
   task: TemporalTask,
   goals: MacroGoal[],
+  recurringTasks?: RecurringTaskDefinition[],
 ): MacroGoal | null {
-  if (task.macroGoalId === MACRO_GOAL_OPT_OUT) return null;
-  if (task.macroGoalId) {
-    return goals.find((g) => g.id === task.macroGoalId) ?? null;
-  }
-  return goals.find((g) => taskMatchesMacroGoal(task, g)) ?? null;
+  const goalId = resolveTaskMacroGoalId(task, recurringTasks);
+  if (!goalId) return null;
+  return goals.find((g) => g.id === goalId) ?? null;
 }

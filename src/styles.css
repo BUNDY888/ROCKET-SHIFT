@@ -1821,6 +1821,35 @@ html.widget-html .widget-root {
   color: var(--rs-text);
 }
 
+.day-readonly-goal-edit-hint {
+  margin-top: 8px;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+
+.day-readonly-task {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.day-readonly-task-summary {
+  line-height: 1.4;
+}
+
+.day-readonly-goal-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  max-width: 220px;
+}
+
+.day-readonly-goal-field select {
+  font-size: 0.9rem;
+}
+
 .day-readonly-list li {
   margin-bottom: 0.35rem;
 }

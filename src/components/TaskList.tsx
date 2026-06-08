@@ -363,7 +363,7 @@ export function TaskList({
                   });
                 }}
               >
-                <option value="">Авто по названию (тег)</option>
+                <option value="">Не привязана</option>
                 {macroGoals.map((g) => (
                   <option key={g.id} value={g.id}>
                     {g.emoji} {g.name}
@@ -382,7 +382,6 @@ export function TaskList({
 
                 <DurationField
                   label="План"
-                  syncOnMount
                   minutes={task.plannedMinutes}
                   onChange={(plannedMinutes) => syncTemporalSchedule(task, { plannedMinutes })}
                 />

@@ -1,5 +1,11 @@
 import { useEffect, useState } from 'react';
-import type { CloseDayPreview, DayMood, Task, MacroGoal } from '../../electron/types';
+import type {
+  CloseDayPreview,
+  DayMood,
+  MacroGoal,
+  RecurringTaskDefinition,
+  Task,
+} from '../../electron/types';
 import { DAY_MOODS, DAY_MOOD_LABELS } from '../../electron/types';
 import { PercentDisplay } from './PercentDisplay';
 import {
@@ -25,6 +31,7 @@ interface Props {
   newlyUnlocked?: UnlockedAchievement[];
   tasks?: Task[];
   macroGoals?: MacroGoal[];
+  recurringTasks?: RecurringTaskDefinition[];
 }
 
 export function CloseDayModal({
@@ -38,6 +45,7 @@ export function CloseDayModal({
   newlyUnlocked = [],
   tasks = [],
   macroGoals = [],
+  recurringTasks = [],
 }: Props) {
   const [preview, setPreview] = useState<CloseDayPreview | null>(null);
   const [mood, setMood] = useState<DayMood | null>(null);
@@ -97,7 +105,7 @@ export function CloseDayModal({
 
   const victory =
     done && mood
-      ? buildCloseDayVictorySummary(preview, tasks, macroGoals, streakLabel)
+      ? buildCloseDayVictorySummary(preview, tasks, macroGoals, streakLabel, recurringTasks)
       : null;
 
   return (

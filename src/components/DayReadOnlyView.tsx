@@ -1,18 +1,28 @@
-import type { DayState, Task } from '../../electron/types';
+import type { DayState, MacroGoal, Task, TemporalTask } from '../../electron/types';
 import { DAY_MOOD_LABELS } from '../../electron/types';
 import { decimalHourToTimeValue } from '../lib/timeInput';
 import { formatInvestedDuration } from '../lib/dayClose';
 import { formatDurationMinutes } from '../lib/durationFormat';
+import { MACRO_GOAL_OPT_OUT } from '../lib/macroGoals';
 import { sortTasksForDisplay } from '../lib/taskDisplay';
 
 interface Props {
   date: string;
   day: DayState;
   percent: number;
+  macroGoals: MacroGoal[];
   onClose: () => void;
+  onTaskGoalChange?: (taskId: string, macroGoalId: string | null) => void;
 }
 
-export function DayReadOnlyView({ date, day, percent, onClose }: Props) {
+export function DayReadOnlyView({
+  date,
+  day,
+  percent,
+  macroGoals,
+  onClose,
+  onTaskGoalChange,
+}: Props) {
   const close = day.close;
   const displayPercent = close?.percentAtClose ?? percent;
 
@@ -43,6 +53,11 @@ export function DayReadOnlyView({ date, day, percent, onClose }: Props) {
               Временные {close.temporalPercent}% · Фиксированные +{close.fixedPercent}% ·{' '}
               {close.tasksCompleted}/{close.tasksTotal} с прогрессом
             </p>
+            {macroGoals.length > 0 && onTaskGoalChange && (
+              <p className="day-readonly-goal-edit-hint">
+                Можно изменить привязку к цели у задачи — % закрытого дня не меняется.
+              </p>
+            )}
           </div>
         )}
 
@@ -51,11 +66,72 @@ export function DayReadOnlyView({ date, day, percent, onClose }: Props) {
         ) : (
           <ul className="day-readonly-list">
             {sortTasksForDisplay(day.tasks).map((t) => (
-              <li key={t.id}>{renderTask(t)}</li>
+              <li key={t.id}>
+                <ReadOnlyTaskRow
+                  task={t}
+                  macroGoals={macroGoals}
+                  onTaskGoalChange={onTaskGoalChange}
+                />
+              </li>
             ))}
           </ul>
         )}
       </div>
+    </div>
+  );
+}
+
+function ReadOnlyTaskRow({
+  task,
+  macroGoals,
+  onTaskGoalChange,
+}: {
+  task: Task;
+  macroGoals: MacroGoal[];
+  onTaskGoalChange?: (taskId: string, macroGoalId: string | null) => void;
+}) {
+  const summary =
+    task.type === 'temporal'
+      ? `${task.name}: ${formatDurationMinutes(task.actualMinutes)} / ${formatDurationMinutes(task.plannedMinutes)} (${decimalHourToTimeValue(task.startHour)}–${decimalHourToTimeValue(task.endHour)})`
+      : (() => {
+          const time =
+            task.completedHour != null ? ` в ${decimalHourToTimeValue(task.completedHour)}` : '';
+          return `${task.name}: ${task.completed ? `✓ ${task.weightPercent}%${time}` : `— ${task.weightPercent}%`}`;
+        })();
+
+  const canEditGoal =
+    task.type === 'temporal' && macroGoals.length > 0 && onTaskGoalChange != null;
+
+  return (
+    <div className="day-readonly-task">
+      <span className="day-readonly-task-summary">{summary}</span>
+      {canEditGoal && (
+        <label className="day-readonly-goal-field">
+          Цель
+          <select
+            value={
+              task.macroGoalId === MACRO_GOAL_OPT_OUT
+                ? MACRO_GOAL_OPT_OUT
+                : task.macroGoalId ?? ''
+            }
+            onChange={(e) => {
+              const value = e.target.value;
+              onTaskGoalChange(
+                task.id,
+                value === '' ? null : value === MACRO_GOAL_OPT_OUT ? MACRO_GOAL_OPT_OUT : value,
+              );
+            }}
+          >
+            <option value="">Не привязана</option>
+            {macroGoals.map((g) => (
+              <option key={g.id} value={g.id}>
+                {g.emoji} {g.name}
+              </option>
+            ))}
+            <option value={MACRO_GOAL_OPT_OUT}>Не учитывать</option>
+          </select>
+        </label>
+      )}
     </div>
   );
 }
@@ -67,13 +143,4 @@ function formatDateTitle(dateKey: string): string {
     day: 'numeric',
     month: 'long',
   });
-}
-
-function renderTask(task: Task): string {
-  if (task.type === 'temporal') {
-    return `${task.name}: ${formatDurationMinutes(task.actualMinutes)} / ${formatDurationMinutes(task.plannedMinutes)} (${decimalHourToTimeValue(task.startHour)}–${decimalHourToTimeValue(task.endHour)})`;
-  }
-  const time =
-    task.completedHour != null ? ` в ${decimalHourToTimeValue(task.completedHour)}` : '';
-  return `${task.name}: ${task.completed ? `✓ ${task.weightPercent}%${time}` : `— ${task.weightPercent}%`}`;
 }

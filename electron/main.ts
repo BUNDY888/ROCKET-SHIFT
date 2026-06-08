@@ -83,6 +83,7 @@ import {
   ensureUniqueRecurringIdsInDay,
   ensureRecurringTasksForDay,
   setTaskRecurrence,
+  reconcileRecurringMacroGoals,
   syncRecurringTemplatesFromDay,
   deleteRecurringDefinition,
   setRecurringEnabled,
@@ -139,6 +140,7 @@ let timerBroadcast: ReturnType<typeof setInterval> | null = null;
 let reminderCheckInterval: ReturnType<typeof setInterval> | null = null;
 let lastReminderAt = 0;
 let persisted: PersistedData = loadData();
+persisted = reconcileRecurringMacroGoals(persisted);
 persisted = syncMacroGoals(persisted, false).data;
 let pendingMacroGoalCompletions: MacroGoalCompletion[] = [];
 

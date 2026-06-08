@@ -15,19 +15,12 @@ interface Props {
   minutes: number;
   onChange: (minutes: number) => void;
   disabled?: boolean;
-  /** При открытии дня подтянуть конец из плана (только для поля «План»). */
-  syncOnMount?: boolean;
 }
 
-export function DurationField({ label, minutes, onChange, disabled, syncOnMount }: Props) {
+export function DurationField({ label, minutes, onChange, disabled }: Props) {
   const [unit, setUnit] = useState<DurationInputUnit>(() => defaultDurationUnit(minutes));
   const [draft, setDraft] = useState<string | null>(null);
   const focusedRef = useRef(false);
-
-  useEffect(() => {
-    if (syncOnMount) onChange(minutes);
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- только при смене плана
-  }, [syncOnMount, minutes]);
 
   useEffect(() => {
     if (!focusedRef.current) {

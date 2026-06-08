@@ -1,4 +1,4 @@
-import type { CloseDayPreview, MacroGoal, Task } from '../../electron/types';
+import type { CloseDayPreview, MacroGoal, RecurringTaskDefinition, Task } from '../../electron/types';
 import {
   formatInvestedDuration,
   formatInvestedDelta,
@@ -14,11 +14,15 @@ function streakDaysLabel(n: number): string {
   return `${n} дней подряд`;
 }
 
-function macroMinutesToday(tasks: Task[], goals: MacroGoal[]): { goal: MacroGoal; minutes: number }[] {
+function macroMinutesToday(
+  tasks: Task[],
+  goals: MacroGoal[],
+  recurringTasks?: RecurringTaskDefinition[],
+): { goal: MacroGoal; minutes: number }[] {
   const map = new Map<string, number>();
   for (const task of tasks) {
     if (task.type !== 'temporal' || task.actualMinutes <= 0) continue;
-    const goal = resolveTaskMacroGoal(task, goals);
+    const goal = resolveTaskMacroGoal(task, goals, recurringTasks);
     if (!goal) continue;
     map.set(goal.id, (map.get(goal.id) ?? 0) + task.actualMinutes);
   }
@@ -33,6 +37,7 @@ export function buildCloseDayVictorySummary(
   tasks: Task[],
   macroGoals: MacroGoal[],
   streak: number,
+  recurringTasks?: RecurringTaskDefinition[],
 ): { headline: string; lines: string[] } {
   const lines: string[] = [];
   const headline = `Сегодня ${preview.percent}% — ${formatInvestedDuration(preview.investedMinutes)} вложено в себя`;
@@ -51,7 +56,7 @@ export function buildCloseDayVictorySummary(
     lines.push(`Цель дня ${preview.dailyGoalPercent}% выполнена`);
   }
 
-  for (const { goal, minutes } of macroMinutesToday(tasks, macroGoals).slice(0, 2)) {
+  for (const { goal, minutes } of macroMinutesToday(tasks, macroGoals, recurringTasks).slice(0, 2)) {
     lines.push(`+${formatMacroGoalHours(minutes)} к «${goal.name}»`);
   }
 

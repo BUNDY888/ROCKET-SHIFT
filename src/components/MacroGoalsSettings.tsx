@@ -117,8 +117,9 @@ export function MacroGoalsSettings({ goals, onChanged }: Props) {
     <fieldset className="macro-goals-settings">
       <legend>Цели (до {MAX_MACRO_GOALS})</legend>
       <p className="hint">
-        Прогресс = «уже сделано до приложения» + факт по задачам с даты создания цели (тег в
-        названии или привязка в карточке).
+        Прогресс = «уже сделано до приложения» + факт по задачам, где в карточке выбрана эта цель
+        (у повторяющихся — из шаблона серии). Название задачи не важно. В цель идёт «Факт», не
+        «План».
       </p>
 
       {goals.length > 0 && (
@@ -161,11 +162,11 @@ export function MacroGoalsSettings({ goals, onChanged }: Props) {
             />
           </label>
           <label>
-            Тег в названии задачи
+            Заметка (необяз.)
             <input
               value={form.linkTag}
               onChange={(e) => setForm({ ...form, linkTag: e.target.value })}
-              placeholder="английский"
+              placeholder="для себя, на подсчёт не влияет"
             />
           </label>
           <label>

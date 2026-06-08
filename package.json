@@ -1,6 +1,6 @@
 {
   "name": "rocket-shift",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Rocket Shift — desktop day planner with always-on-top widget",
   "main": "dist-electron/main.js",
   "author": "",

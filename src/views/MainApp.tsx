@@ -86,6 +86,8 @@ export function MainApp() {
 
     deleteTemplate,
 
+    saveDay,
+
     savePendingRef,
 
     setLocalState,
@@ -120,15 +122,16 @@ export function MainApp() {
   const yesterdayCheckDone = useRef(false);
 
   const saveTimer = useRef<ReturnType<typeof setTimeout>>();
+  const tasksDirtyRef = useRef(false);
   const tasksRef = useRef(tasks);
   tasksRef.current = tasks;
 
 
 
   useEffect(() => {
-    if (savePendingRef.current) return;
+    if (savePendingRef.current || tasksDirtyRef.current) return;
     if (state) setTasks(syncAllTemporalTaskEnds(state.day.tasks));
-  }, [state?.day.tasks, state?.day.date, savePendingRef, state]);
+  }, [state?.day.tasks, state?.day.date, savePendingRef]);
 
 
 
@@ -213,9 +216,22 @@ export function MainApp() {
       return;
     }
     window.electronAPI.getHistoryDay(selectedHistoryDate).then(setHistoryDayDetail);
-  }, [selectedHistoryDate, state?.day.date]);
+  }, [selectedHistoryDate, state?.day.date, state?.macroGoals]);
 
 
+
+  const handleHistoryTaskGoalChange = async (taskId: string, macroGoalId: string | null) => {
+    if (!historyDayDetail || !selectedHistoryDate) return;
+    const updatedTasks = historyDayDetail.day.tasks.map((t) => {
+      if (t.id !== taskId || t.type !== 'temporal') return t;
+      return { ...t, macroGoalId };
+    });
+    const updatedDay = { ...historyDayDetail.day, tasks: updatedTasks };
+    const payload = await saveDay(updatedDay);
+    applyPayload(payload);
+    const detail = await window.electronAPI.getHistoryDay(selectedHistoryDate);
+    setHistoryDayDetail(detail);
+  };
 
   const applyPayload = (payload: StatePayload) => {
 
@@ -233,6 +249,7 @@ export function MainApp() {
 
   const handleTasksChange = (next: Task[]) => {
     const synced = syncAllTemporalTaskEnds(next);
+    tasksDirtyRef.current = true;
     setTasks(synced);
 
     if (!state) return;
@@ -265,6 +282,7 @@ export function MainApp() {
 
     const persist = () => {
       void updateTasks(synced).then((payload) => {
+        tasksDirtyRef.current = false;
         setTasks(syncAllTemporalTaskEnds(payload.day.tasks));
         if (payload.macroGoalCelebrations?.length) {
           setMacroCelebrations(payload.macroGoalCelebrations);
@@ -655,6 +673,12 @@ export function MainApp() {
 
           percent={historyDayDetail.percent}
 
+          macroGoals={state.macroGoals ?? []}
+
+          onTaskGoalChange={(taskId, macroGoalId) => {
+            void handleHistoryTaskGoalChange(taskId, macroGoalId);
+          }}
+
           onClose={() => setSelectedHistoryDate(null)}
 
         />
@@ -854,6 +878,7 @@ export function MainApp() {
         newlyUnlocked={newAchievements}
         tasks={tasks}
         macroGoals={state.macroGoals ?? []}
+        recurringTasks={state.recurringTasks ?? []}
         onDismissPending={
           closeDayTargetDate ? handleDismissYesterdayClose : undefined
         }
