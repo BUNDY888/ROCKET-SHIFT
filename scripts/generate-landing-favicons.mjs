@@ -111,6 +111,7 @@ async function main() {
   const sizes = [
     ['favicon-16x16.png', 16],
     ['favicon-32x32.png', 32],
+    ['favicon-120x120.png', 120],
     ['favicon-192x192.png', 192],
     ['apple-touch-icon.png', 180],
   ];
