@@ -1,5 +1,11 @@
 export type TaskType = 'temporal' | 'fixed';
 
+export interface TemporalSubtask {
+  id: string;
+  text: string;
+  completed: boolean;
+}
+
 export interface TemporalTask {
   id: string;
   type: 'temporal';
@@ -8,6 +14,8 @@ export interface TemporalTask {
   actualMinutes: number;
   startHour: number;
   endHour: number;
+  /** Чеклист дел внутри слота — на % дня не влияет. */
+  subtasks?: TemporalSubtask[];
   /** Реальное начало работы (для режима «Факт» на гистограмме). */
   factStartHour?: number | null;
   /** Реальное окончание работы (для режима «Факт» на гистограмме). */
@@ -315,7 +323,9 @@ export interface PersistedData {
   macroGoals: MacroGoal[];
   streak: StreakState;
   lastCloseDayReminderDate: string | null;
+  /** @deprecated use dismissedPastCloseDates */
   dismissedYesterdayCloseDate: string | null;
+  dismissedPastCloseDates?: string[];
   /** id → ISO дата разблокировки */
   unlockedAchievements?: Partial<Record<AchievementId, string>>;
 }

@@ -6,7 +6,7 @@ import type {
   RecurringTaskDefinition,
   Task,
 } from '../../electron/types';
-import { DAY_MOODS, DAY_MOOD_LABELS } from '../../electron/types';
+import { DAY_MOODS, DAY_MOOD_LABELS, todayKey } from '../../electron/types';
 import { PercentDisplay } from './PercentDisplay';
 import {
   CLOSE_DAY_NOTE_MAX,
@@ -23,7 +23,7 @@ import type { UnlockedAchievement } from '../../electron/types';
 interface Props {
   open: boolean;
   onClose: () => void;
-  onConfirm: (mood: DayMood, note: string) => Promise<void>;
+  onConfirm: (mood: DayMood, note: string) => Promise<boolean | void>;
   loading?: boolean;
   targetDate?: string;
   yesterdayLabel?: string;
@@ -51,7 +51,7 @@ export function CloseDayModal({
   const [mood, setMood] = useState<DayMood | null>(null);
   const [note, setNote] = useState('');
   const [done, setDone] = useState(false);
-  const isYesterdayClose = Boolean(targetDate);
+  const isPastDayClose = Boolean(targetDate && targetDate !== todayKey());
 
   useEffect(() => {
     if (!open) {
@@ -61,9 +61,13 @@ export function CloseDayModal({
       setDone(false);
       return;
     }
+    setDone(false);
+    setMood(null);
+    setNote('');
+    const pastClose = Boolean(targetDate && targetDate !== todayKey());
     window.electronAPI.getCloseDayPreview(targetDate).then((p) => {
       setPreview(p);
-      setMood(p.previousMood ?? null);
+      setMood(p.previousMood ?? (pastClose ? '🙂' : null));
       setNote(p.previousNote ?? '');
     });
   }, [open, targetDate]);
@@ -78,8 +82,10 @@ export function CloseDayModal({
 
   const handleConfirm = async () => {
     if (!mood) return;
-    await onConfirm(mood, normalizeCloseDayNote(note));
-    setDone(true);
+    const keepOpen = await onConfirm(mood, normalizeCloseDayNote(note));
+    if (keepOpen !== true) {
+      setDone(true);
+    }
   };
 
   const streakLabel =
@@ -115,18 +121,18 @@ export function CloseDayModal({
           <div>
             <h2>
               {done
-                ? isYesterdayClose
-                  ? 'Вчера сохранено'
+                ? isPastDayClose
+                  ? 'День сохранён'
                   : 'День сохранён'
-                : isYesterdayClose
-                  ? 'Закрыть вчера'
+                : isPastDayClose
+                  ? 'Закрыть прошлый день'
                   : preview.alreadyClosed
                     ? 'Итог дня'
                     : 'Закрыть день'}
             </h2>
-            {isYesterdayClose && yesterdayLabel && !done && (
+            {isPastDayClose && yesterdayLabel && !done && (
               <p className="close-day-yesterday-hint">
-                {yesterdayLabel} — день не был закрыт
+                {yesterdayLabel} — день не был закрыт. Выберите настроение и нажмите «Закрыть».
               </p>
             )}
           </div>
@@ -237,12 +243,12 @@ export function CloseDayModal({
             >
               {preview.alreadyClosed
                 ? 'Обновить итог'
-                : isYesterdayClose
-                  ? 'Закрыть вчера'
+                : isPastDayClose
+                  ? 'Закрыть этот день'
                   : 'Закрыть и сохранить'}
             </button>
 
-            {isYesterdayClose && onDismissPending && (
+            {isPastDayClose && onDismissPending && (
               <button
                 type="button"
                 className="close-day-later btn-secondary"

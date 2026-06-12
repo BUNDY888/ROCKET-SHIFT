@@ -32,6 +32,7 @@ import { SettingsPanel } from '../components/SettingsPanel';
 import { OnboardingOverlay } from '../components/OnboardingOverlay';
 import { WidgetSetupBanner } from '../components/WidgetSetupBanner';
 import { CloseDayModal } from '../components/CloseDayModal';
+import { PastDaysCloseBanner } from '../components/PastDaysCloseBanner';
 import { AchievementsModal } from '../components/AchievementsModal';
 import type { DayMood } from '../../electron/types';
 import { formatInvestedDuration } from '../lib/dayClose';
@@ -119,6 +120,7 @@ export function MainApp() {
   const [macroGoalsOpen, setMacroGoalsOpen] = useMacroGoalsHeaderState();
   const [macroCelebrations, setMacroCelebrations] = useState<MacroGoalCompletion[]>([]);
   const [newAchievements, setNewAchievements] = useState<UnlockedAchievement[]>([]);
+  const [pendingPastCloseCount, setPendingPastCloseCount] = useState(0);
   const yesterdayCheckDone = useRef(false);
 
   const saveTimer = useRef<ReturnType<typeof setTimeout>>();
@@ -166,11 +168,23 @@ export function MainApp() {
     });
   }, []);
 
+  const refreshPendingPastCloseCount = async () => {
+    const list = await window.electronAPI.listPendingPastCloses();
+    setPendingPastCloseCount(list.length);
+    return list;
+  };
+
+  useEffect(() => {
+    if (!state?.settings.onboardingCompleted) return;
+    void refreshPendingPastCloseCount();
+  }, [state?.settings.onboardingCompleted, state?.day.date, state?.day.close, closeDayOpen]);
+
   useEffect(() => {
     if (!state?.settings.onboardingCompleted) return;
     if (yesterdayCheckDone.current) return;
     yesterdayCheckDone.current = true;
-    window.electronAPI.getPendingYesterdayClose().then((pending) => {
+    void refreshPendingPastCloseCount().then((list) => {
+      const pending = list[0];
       if (!pending) return;
       setCloseDayTargetDate(pending.date);
       setYesterdayCloseLabel(pending.label);
@@ -328,6 +342,34 @@ export function MainApp() {
     setCloseDayOpen(true);
   };
 
+  const openPendingPastDayClose = async (): Promise<boolean> => {
+    const list = await refreshPendingPastCloseCount();
+    const pending = list[0];
+    if (!pending) return false;
+    setNewAchievements([]);
+    setCloseDayTargetDate(pending.date);
+    setYesterdayCloseLabel(pending.label);
+    setCloseDayOpen(true);
+    return true;
+  };
+
+  const handleDismissAllPendingPastCloses = async () => {
+    await window.electronAPI.dismissAllPendingPastCloses();
+    setCloseDayTargetDate(undefined);
+    setYesterdayCloseLabel(undefined);
+    setCloseDayOpen(false);
+    await refreshPendingPastCloseCount();
+  };
+
+  const openPastDayClose = (date: string, label: string) => {
+    setSelectedHistoryDate(null);
+    setHistoryDayDetail(null);
+    setNewAchievements([]);
+    setCloseDayTargetDate(date);
+    setYesterdayCloseLabel(label);
+    setCloseDayOpen(true);
+  };
+
   const handleToggleTimer = async () => {
     applyPayload(await window.electronAPI.widgetToggleTimer());
   };
@@ -441,10 +483,11 @@ export function MainApp() {
   );
   const streakCurrent = state.streak?.current ?? 0;
 
-  const handleCloseDayConfirm = async (mood: DayMood, note: string) => {
+  const handleCloseDayConfirm = async (mood: DayMood, note: string): Promise<boolean> => {
     if (mood === '🏆' && state.settings.goalCelebrationEnabled !== false) {
       playTrophyCloseSound();
     }
+    const closedPastDate = closeDayTargetDate;
     setCloseDayLoading(true);
     try {
       const result = await window.electronAPI.closeDay(mood, note, closeDayTargetDate);
@@ -452,16 +495,26 @@ export function MainApp() {
       setNewAchievements(result.newlyUnlocked);
       setCloseDayTargetDate(undefined);
       setYesterdayCloseLabel(undefined);
+      await refreshPendingPastCloseCount();
+      if (closedPastDate && (await openPendingPastDayClose())) {
+        return true;
+      }
+      return false;
     } finally {
       setCloseDayLoading(false);
     }
   };
 
   const handleDismissYesterdayClose = async () => {
-    await window.electronAPI.dismissYesterdayClose();
+    if (!closeDayTargetDate) {
+      setCloseDayOpen(false);
+      return;
+    }
+    await window.electronAPI.dismissYesterdayClose(closeDayTargetDate);
     setCloseDayTargetDate(undefined);
     setYesterdayCloseLabel(undefined);
     setCloseDayOpen(false);
+    await refreshPendingPastCloseCount();
   };
 
   const handleCloseDayModalClose = () => {
@@ -575,6 +628,17 @@ export function MainApp() {
           timerTick={timerTick}
           onToggleTimer={handleToggleTimer}
           onExit={() => setFocusMode(false)}
+          onSubtasksChange={
+            focusTask
+              ? (subtasks) => {
+                  handleTasksChange(
+                    tasks.map((t) =>
+                      t.id === focusTask.id && t.type === 'temporal' ? { ...t, subtasks } : t,
+                    ),
+                  );
+                }
+              : undefined
+          }
         />
       ) : (
         <>
@@ -592,6 +656,14 @@ export function MainApp() {
       {showWidgetSetupHint && (
         <WidgetSetupBanner
           onDismiss={() => saveSettings({ widgetSetupHintDismissed: true })}
+        />
+      )}
+
+      {!closeDayOpen && pendingPastCloseCount > 0 && (
+        <PastDaysCloseBanner
+          count={pendingPastCloseCount}
+          onCloseNext={() => void openPendingPastDayClose()}
+          onDismissAll={() => void handleDismissAllPendingPastCloses()}
         />
       )}
 
@@ -680,6 +752,7 @@ export function MainApp() {
           }}
 
           onClose={() => setSelectedHistoryDate(null)}
+          onCloseDay={openPastDayClose}
 
         />
 

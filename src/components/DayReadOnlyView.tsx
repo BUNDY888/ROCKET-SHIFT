@@ -12,6 +12,7 @@ interface Props {
   percent: number;
   macroGoals: MacroGoal[];
   onClose: () => void;
+  onCloseDay?: (date: string, label: string) => void;
   onTaskGoalChange?: (taskId: string, macroGoalId: string | null) => void;
 }
 
@@ -21,10 +22,12 @@ export function DayReadOnlyView({
   percent,
   macroGoals,
   onClose,
+  onCloseDay,
   onTaskGoalChange,
 }: Props) {
   const close = day.close;
   const displayPercent = close?.percentAtClose ?? percent;
+  const canCloseDay = !close && day.tasks.length > 0 && onCloseDay;
 
   return (
     <div className="day-readonly-overlay" onClick={onClose}>
@@ -38,6 +41,19 @@ export function DayReadOnlyView({
             ✕
           </button>
         </div>
+
+        {canCloseDay && (
+          <div className="day-readonly-close-prompt">
+            <p>Этот день не был закрыт.</p>
+            <button
+              type="button"
+              className="close-day-submit"
+              onClick={() => onCloseDay(date, formatDateTitle(date))}
+            >
+              Закрыть этот день
+            </button>
+          </div>
+        )}
 
         {close && (
           <div className="day-readonly-close-summary">
@@ -72,6 +88,18 @@ export function DayReadOnlyView({
                   macroGoals={macroGoals}
                   onTaskGoalChange={onTaskGoalChange}
                 />
+                {t.type === 'temporal' && t.subtasks && t.subtasks.length > 0 && (
+                  <ul className="day-readonly-subtasks">
+                    {t.subtasks.map((item) => (
+                      <li
+                        key={item.id}
+                        className={item.completed ? 'day-readonly-subtask-done' : undefined}
+                      >
+                        {item.completed ? '✓' : '○'} {item.text}
+                      </li>
+                    ))}
+                  </ul>
+                )}
               </li>
             ))}
           </ul>

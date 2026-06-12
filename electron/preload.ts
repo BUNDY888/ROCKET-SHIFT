@@ -183,8 +183,14 @@ contextBridge.exposeInMainWorld('electronAPI', {
   getPendingYesterdayClose: (): Promise<PendingYesterdayClose | null> =>
     ipcRenderer.invoke('day:pendingYesterdayClose'),
 
-  dismissYesterdayClose: (): Promise<boolean> =>
-    ipcRenderer.invoke('day:dismissYesterdayClose'),
+  dismissYesterdayClose: (dateKey: string): Promise<boolean> =>
+    ipcRenderer.invoke('day:dismissYesterdayClose', dateKey),
+
+  listPendingPastCloses: (): Promise<PendingYesterdayClose[]> =>
+    ipcRenderer.invoke('day:listPendingPastCloses'),
+
+  dismissAllPendingPastCloses: (): Promise<boolean> =>
+    ipcRenderer.invoke('day:dismissAllPendingPastCloses'),
 
   setTaskRecurrence: (taskId: string, pattern: RecurrencePattern | null) =>
     ipcRenderer.invoke('recurring:setForTask', taskId, pattern),

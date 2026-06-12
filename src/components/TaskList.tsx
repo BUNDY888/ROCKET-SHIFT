@@ -26,6 +26,8 @@ import {
 } from '../lib/taskDisplay';
 import { formatDurationMinutes } from '../lib/durationFormat';
 import { DurationField } from './DurationField';
+import { TemporalSubtaskList } from './TemporalSubtaskList';
+import { formatSubtaskProgress } from '../lib/temporalSubtasks';
 
 import {
 
@@ -249,6 +251,7 @@ export function TaskList({
                     factStartHour: null,
                     factEndHour: null,
                     macroGoalId: null,
+                    subtasks: [],
 
                     recurringId: task.recurringId,
 
@@ -301,6 +304,12 @@ export function TaskList({
               placeholder="Название"
 
             />
+
+            {task.type === 'temporal' && formatSubtaskProgress(task.subtasks) && (
+              <span className="task-subtasks-badge" title="Дела в слоте">
+                {formatSubtaskProgress(task.subtasks)}
+              </span>
+            )}
 
             {task.recurringId && (
               <span className="task-recurring-badge" title="Повторяющаяся задача">
@@ -502,6 +511,11 @@ export function TaskList({
                   </p>
                 );
               })()}
+
+              <TemporalSubtaskList
+                subtasks={task.subtasks ?? []}
+                onChange={(subtasks) => update(task.id, { subtasks })}
+              />
 
             </>
 

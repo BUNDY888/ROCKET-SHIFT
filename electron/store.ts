@@ -31,6 +31,7 @@ function defaultData(): PersistedData {
     streak: { ...DEFAULT_STREAK },
     lastCloseDayReminderDate: null,
     dismissedYesterdayCloseDate: null,
+    dismissedPastCloseDates: [],
   };
 }
 
@@ -183,6 +184,9 @@ export function loadData(): PersistedData {
         streak: parsed.streak ?? { ...DEFAULT_STREAK },
         lastCloseDayReminderDate: parsed.lastCloseDayReminderDate ?? null,
         dismissedYesterdayCloseDate: parsed.dismissedYesterdayCloseDate ?? null,
+        dismissedPastCloseDates:
+          parsed.dismissedPastCloseDates ??
+          (parsed.dismissedYesterdayCloseDate ? [parsed.dismissedYesterdayCloseDate] : []),
         unlockedAchievements: parsed.unlockedAchievements ?? {},
       };
       const synced = syncAchievements(result, false);

@@ -15,9 +15,21 @@ export function tasksToTemplateItems(tasks: Task[]): TaskTemplateItem[] {
         actualMinutes: _a,
         factStartHour: _fs,
         factEndHour: _fe,
+        subtasks,
         ...rest
       } = t;
-      return rest;
+      return {
+        ...rest,
+        ...(subtasks?.length
+          ? {
+              subtasks: subtasks.map(({ text }) => ({
+                id: 'template',
+                text,
+                completed: false,
+              })),
+            }
+          : {}),
+      };
     }
     const { id: _id, completed: _c, completedHour: _h, ...rest } = t;
     return rest;
@@ -34,6 +46,11 @@ export function templateItemsToTasks(items: TaskTemplateItem[]): Task[] {
         factStartHour: null,
         factEndHour: null,
         macroGoalId: t.macroGoalId ?? null,
+        subtasks: t.subtasks?.map((item) => ({
+          id: randomUUID(),
+          text: item.text,
+          completed: false,
+        })),
       } satisfies TemporalTask;
     }
     return {

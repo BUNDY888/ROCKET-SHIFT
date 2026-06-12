@@ -1,4 +1,4 @@
-import type { ActiveTimer, TemporalTask } from '../../electron/types';
+import type { ActiveTimer, TemporalSubtask, TemporalTask } from '../../electron/types';
 import { getZoneColor } from '../lib/calculations';
 import { formatPercentDisplay } from '../lib/percentFormat';
 import {
@@ -15,6 +15,7 @@ interface Props {
   timerTick: number;
   onToggleTimer: () => void;
   onExit: () => void;
+  onSubtasksChange?: (subtasks: TemporalSubtask[]) => void;
 }
 
 export function FocusModePanel({
@@ -24,6 +25,7 @@ export function FocusModePanel({
   timerTick,
   onToggleTimer,
   onExit,
+  onSubtasksChange,
 }: Props) {
   void timerTick;
 
@@ -88,6 +90,35 @@ export function FocusModePanel({
           <button type="button" className="focus-mode-timer-btn" onClick={onToggleTimer}>
             {timerOnTask ? '⏸ Пауза (Space)' : '▶ Старт таймера (Space)'}
           </button>
+
+          {task.subtasks && task.subtasks.length > 0 && (
+            <ul className="focus-mode-subtasks">
+              {task.subtasks.map((item) => (
+                <li key={item.id}>
+                  <label className="focus-mode-subtask">
+                    <input
+                      type="checkbox"
+                      checked={item.completed}
+                      disabled={!onSubtasksChange}
+                      onChange={(e) => {
+                        if (!onSubtasksChange || !task.subtasks) return;
+                        onSubtasksChange(
+                          task.subtasks.map((entry) =>
+                            entry.id === item.id
+                              ? { ...entry, completed: e.target.checked }
+                              : entry,
+                          ),
+                        );
+                      }}
+                    />
+                    <span className={item.completed ? 'focus-mode-subtask-done' : undefined}>
+                      {item.text}
+                    </span>
+                  </label>
+                </li>
+              ))}
+            </ul>
+          )}
         </>
       )}
     </section>

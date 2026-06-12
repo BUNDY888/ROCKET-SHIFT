@@ -64,8 +64,10 @@ import {
   shouldSendCloseDayReminder,
 } from './closeDayReminder';
 import {
+  dismissAllPendingPastCloses,
   dismissYesterdayClose,
   getPendingYesterdayClose,
+  listPendingPastDayCloses,
 } from './yesterdayClose';
 import {
   buildMorningStartInfo,
@@ -1087,9 +1089,19 @@ function registerIpc(): void {
 
   ipcMain.handle('day:pendingYesterdayClose', () => getPendingYesterdayClose(persisted));
 
-  ipcMain.handle('day:dismissYesterdayClose', () => {
-    persisted = dismissYesterdayClose(persisted);
+  ipcMain.handle('day:listPendingPastCloses', () => listPendingPastDayCloses(persisted));
+
+  ipcMain.handle('day:dismissYesterdayClose', (_e, dateKey: string) => {
+    persisted = dismissYesterdayClose(persisted, dateKey);
     saveData(persisted);
+    broadcastState();
+    return true;
+  });
+
+  ipcMain.handle('day:dismissAllPendingPastCloses', () => {
+    persisted = dismissAllPendingPastCloses(persisted);
+    saveData(persisted);
+    broadcastState();
     return true;
   });
 

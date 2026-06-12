@@ -83,7 +83,11 @@ declare global {
 
       getPendingYesterdayClose: () => Promise<PendingYesterdayClose | null>;
 
-      dismissYesterdayClose: () => Promise<boolean>;
+      dismissYesterdayClose: (dateKey: string) => Promise<boolean>;
+
+      listPendingPastCloses: () => Promise<PendingYesterdayClose[]>;
+
+      dismissAllPendingPastCloses: () => Promise<boolean>;
 
       setTaskRecurrence: (taskId: string, pattern: RecurrencePattern | null) => Promise<StatePayload>;
 
