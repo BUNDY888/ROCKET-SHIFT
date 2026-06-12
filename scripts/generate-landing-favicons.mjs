@@ -9,26 +9,13 @@ const landingDir = path.join(root, 'landing');
 const sourceLogo = path.join(landingDir, 'assets', 'rocket-logo.png');
 const cli = path.join(root, 'node_modules', 'png2icons', 'png2icons-cli.js');
 
-const BRAND_BG = '#111118';
-
+/** Rocket outline only — transparent background, no solid square. */
 async function buildSquareIcon(size) {
-  const rocket = await sharp(sourceLogo)
-    .resize(Math.round(size * 0.62), Math.round(size * 0.62), {
+  return sharp(sourceLogo)
+    .resize(size, size, {
       fit: 'contain',
       background: { r: 0, g: 0, b: 0, alpha: 0 },
     })
-    .png()
-    .toBuffer();
-
-  return sharp({
-    create: {
-      width: size,
-      height: size,
-      channels: 4,
-      background: BRAND_BG,
-    },
-  })
-    .composite([{ input: rocket, gravity: 'center' }])
     .png()
     .toBuffer();
 }
