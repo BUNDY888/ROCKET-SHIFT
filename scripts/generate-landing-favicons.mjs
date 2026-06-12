@@ -9,31 +9,60 @@ const landingDir = path.join(root, 'landing');
 const sourceLogo = path.join(landingDir, 'assets', 'rocket-logo.png');
 const cli = path.join(root, 'node_modules', 'png2icons', 'png2icons-cli.js');
 
-/** Purple zone color from app (72%+ day). */
+/** Purple zone color from app scale (72%+). */
 const CIRCLE_FILL = '#8e24aa';
-const CIRCLE_RATIO = 0.92;
-const ROCKET_RATIO = 0.52;
+const ROCKET_RATIO = 0.58;
+
+function isRocketLine(r, g, b, a) {
+  if (a < 16) return false;
+  return r >= 190 && g >= 190 && b >= 190;
+}
+
+/** White rocket outline on transparent background (source PNG has black fill). */
+async function extractRocketOutline(pixelSize) {
+  const { data, info } = await sharp(sourceLogo)
+    .resize(pixelSize, pixelSize, {
+      fit: 'contain',
+      background: { r: 0, g: 0, b: 0, alpha: 0 },
+    })
+    .ensureAlpha()
+    .raw()
+    .toBuffer({ resolveWithObject: true });
+
+  for (let i = 0; i < data.length; i += 4) {
+    const r = data[i];
+    const g = data[i + 1];
+    const b = data[i + 2];
+    if (isRocketLine(r, g, b, data[i + 3])) {
+      data[i] = 255;
+      data[i + 1] = 255;
+      data[i + 2] = 255;
+      data[i + 3] = 255;
+    } else {
+      data[i] = 0;
+      data[i + 1] = 0;
+      data[i + 2] = 0;
+      data[i + 3] = 0;
+    }
+  }
+
+  return sharp(data, {
+    raw: { width: info.width, height: info.height, channels: 4 },
+  })
+    .png()
+    .toBuffer();
+}
 
 async function buildSquareIcon(size) {
-  const diameter = Math.round(size * CIRCLE_RATIO);
-  const radius = diameter / 2;
-  const cx = size / 2;
-  const cy = size / 2;
-
+  const radius = size / 2;
   const circleSvg = Buffer.from(
     `<svg width="${size}" height="${size}" xmlns="http://www.w3.org/2000/svg">
-      <circle cx="${cx}" cy="${cy}" r="${radius}" fill="${CIRCLE_FILL}"/>
+      <circle cx="${radius}" cy="${radius}" r="${radius}" fill="${CIRCLE_FILL}"/>
     </svg>`,
   );
 
   const rocketSize = Math.round(size * ROCKET_RATIO);
-  const rocket = await sharp(sourceLogo)
-    .resize(rocketSize, rocketSize, {
-      fit: 'contain',
-      background: { r: 0, g: 0, b: 0, alpha: 0 },
-    })
-    .png()
-    .toBuffer();
+  const rocket = await extractRocketOutline(rocketSize);
 
   return sharp(circleSvg)
     .composite([{ input: rocket, gravity: 'center' }])
