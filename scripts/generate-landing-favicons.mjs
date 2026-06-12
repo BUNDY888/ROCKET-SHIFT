@@ -9,13 +9,34 @@ const landingDir = path.join(root, 'landing');
 const sourceLogo = path.join(landingDir, 'assets', 'rocket-logo.png');
 const cli = path.join(root, 'node_modules', 'png2icons', 'png2icons-cli.js');
 
-/** Rocket outline only — transparent background, no solid square. */
+/** Purple zone color from app (72%+ day). */
+const CIRCLE_FILL = '#8e24aa';
+const CIRCLE_RATIO = 0.92;
+const ROCKET_RATIO = 0.52;
+
 async function buildSquareIcon(size) {
-  return sharp(sourceLogo)
-    .resize(size, size, {
+  const diameter = Math.round(size * CIRCLE_RATIO);
+  const radius = diameter / 2;
+  const cx = size / 2;
+  const cy = size / 2;
+
+  const circleSvg = Buffer.from(
+    `<svg width="${size}" height="${size}" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="${cx}" cy="${cy}" r="${radius}" fill="${CIRCLE_FILL}"/>
+    </svg>`,
+  );
+
+  const rocketSize = Math.round(size * ROCKET_RATIO);
+  const rocket = await sharp(sourceLogo)
+    .resize(rocketSize, rocketSize, {
       fit: 'contain',
       background: { r: 0, g: 0, b: 0, alpha: 0 },
     })
+    .png()
+    .toBuffer();
+
+  return sharp(circleSvg)
+    .composite([{ input: rocket, gravity: 'center' }])
     .png()
     .toBuffer();
 }
