@@ -11,7 +11,12 @@ const cli = path.join(root, 'node_modules', 'png2icons', 'png2icons-cli.js');
 
 /** Purple zone color from app scale (72%+). */
 const CIRCLE_FILL = '#8e24aa';
-const ROCKET_RATIO = 0.58;
+
+function rocketRatio(size) {
+  if (size <= 16) return 0.92;
+  if (size <= 32) return 0.86;
+  return 0.78;
+}
 
 function isRocketLine(r, g, b, a) {
   if (a < 16) return false;
@@ -19,9 +24,9 @@ function isRocketLine(r, g, b, a) {
 }
 
 /** White rocket outline on transparent background (source PNG has black fill). */
-async function extractRocketOutline(pixelSize) {
+async function extractRocketOutline(pixelSize, bold = false) {
   const { data, info } = await sharp(sourceLogo)
-    .resize(pixelSize, pixelSize, {
+    .resize(Math.max(pixelSize * 2, 128), Math.max(pixelSize * 2, 128), {
       fit: 'contain',
       background: { r: 0, g: 0, b: 0, alpha: 0 },
     })
@@ -46,11 +51,21 @@ async function extractRocketOutline(pixelSize) {
     }
   }
 
-  return sharp(data, {
+  let pipeline = sharp(data, {
     raw: { width: info.width, height: info.height, channels: 4 },
   })
-    .png()
-    .toBuffer();
+    .trim({ threshold: 1 })
+    .resize(pixelSize, pixelSize, {
+      fit: 'contain',
+      background: { r: 0, g: 0, b: 0, alpha: 0 },
+      kernel: sharp.kernel.lanczos3,
+    });
+
+  if (bold) {
+    pipeline = pipeline.blur(0.6).normalise().linear(1.4, -36);
+  }
+
+  return pipeline.png().toBuffer();
 }
 
 async function buildSquareIcon(size) {
@@ -61,8 +76,9 @@ async function buildSquareIcon(size) {
     </svg>`,
   );
 
-  const rocketSize = Math.round(size * ROCKET_RATIO);
-  const rocket = await extractRocketOutline(rocketSize);
+  const ratio = rocketRatio(size);
+  const rocketSize = Math.round(size * ratio);
+  const rocket = await extractRocketOutline(rocketSize, size <= 32);
 
   return sharp(circleSvg)
     .composite([{ input: rocket, gravity: 'center' }])
